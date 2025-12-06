@@ -13,17 +13,23 @@ class Queue:
     Supports file persistence for saving and restoring state.
     """
 
-    def __init__(self):
+    def __init__(self, auto_save_filename="queue_state.txt"):
         """
         Initialize an empty queue.
         
         Creates an empty list to store queue elements.
+        
+        Parameters:
+            auto_save_filename (str): Filename for automatic saving (default: "queue_state.txt")
         """
         self.items = []
+        self.auto_save_filename = auto_save_filename
 
     def enqueue(self, item):
         """
         Add an item to the rear of the queue.
+        
+        Automatically saves the queue state to file after enqueueing.
         
         Parameters:
             item: The item to be added to the queue (typically a job_id)
@@ -32,10 +38,14 @@ class Queue:
             None
         """
         self.items.append(item)
+        # Auto-save after queue modification
+        self.save_queue_to_file(self.auto_save_filename)
 
     def dequeue(self):
         """
         Remove and return the item at the front of the queue.
+        
+        Automatically saves the queue state to file after dequeueing.
         
         Returns:
             The item at the front of the queue (FIFO order)
@@ -45,7 +55,10 @@ class Queue:
         """
         if self.is_empty():
             raise IndexError("Cannot dequeue from an empty queue")
-        return self.items.pop(0)
+        item = self.items.pop(0)
+        # Auto-save after queue modification
+        self.save_queue_to_file(self.auto_save_filename)
+        return item
 
     def is_empty(self):
         """
@@ -116,7 +129,7 @@ class Queue:
             import os
             
             if not os.path.exists(filename):
-                print(f"File {filename} does not exist. Starting with empty queue.")
+                # Silently return False if file doesn't exist (for auto-load on startup)
                 return False
             
             with open(filename, 'r') as f:

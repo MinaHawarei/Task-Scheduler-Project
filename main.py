@@ -25,10 +25,8 @@ def print_menu():
     print("5.  Search for a job by ID")
     print("6.  View last N tasks")
     print("7.  Remove job from hash table")
-    print("8.  Save queue to file")
-    print("9.  Load queue from file")
-    print("10. Display queue status")
-    print("11. Display statistics")
+    print("8.  Display queue status")
+    print("9.  Display statistics")
     print("0.  Exit")
     print("=" * 60)
 
@@ -194,53 +192,6 @@ def remove_job_menu(scheduler):
         print(f"Error removing job: {e}")
 
 
-def save_queue_menu(scheduler):
-    """
-    Handle saving queue to file.
-    
-    Parameters:
-        scheduler: The Scheduler instance
-    
-    Returns:
-        None
-    """
-    try:
-        filename = input("Enter filename (default: queue_state.txt): ").strip()
-        if not filename:
-            filename = "queue_state.txt"
-        
-        if scheduler.save_queue_to_file(filename):
-            print(f"✓ Queue successfully saved to '{filename}'.")
-        else:
-            print(f"✗ Failed to save queue to '{filename}'.")
-    except Exception as e:
-        print(f"Error saving queue: {e}")
-
-
-def load_queue_menu(scheduler):
-    """
-    Handle loading queue from file.
-    
-    Parameters:
-        scheduler: The Scheduler instance
-    
-    Returns:
-        None
-    """
-    try:
-        filename = input("Enter filename (default: queue_state.txt): ").strip()
-        if not filename:
-            filename = "queue_state.txt"
-        
-        if scheduler.load_queue_from_file(filename):
-            print(f"✓ Queue successfully loaded from '{filename}'.")
-            print(f"  Loaded {scheduler.get_queue_size()} task(s).")
-        else:
-            print(f"✗ Failed to load queue from '{filename}'.")
-    except Exception as e:
-        print(f"Error loading queue: {e}")
-
-
 def display_statistics(scheduler):
     """
     Display scheduler statistics.
@@ -268,8 +219,15 @@ def main():
     """
     scheduler = Scheduler()
     
-    print("Welcome to Task Scheduler & Job History Manager!")
+    # Auto-load queue from file on startup
+    if scheduler.load_queue_from_file():
+        print(f"✓ Queue loaded from file. {scheduler.get_queue_size()} task(s) restored.")
+    else:
+        print("Starting with empty queue.")
+    
+    print("\nWelcome to Task Scheduler & Job History Manager!")
     print("This application demonstrates Queue, Linked List, and Hash Table data structures.")
+    print("Note: Queue is automatically saved after every change and loaded on startup.")
     
     while True:
         print_menu()
@@ -295,12 +253,8 @@ def main():
             elif choice == "7":
                 remove_job_menu(scheduler)
             elif choice == "8":
-                save_queue_menu(scheduler)
-            elif choice == "9":
-                load_queue_menu(scheduler)
-            elif choice == "10":
                 scheduler.display_queue()
-            elif choice == "11":
+            elif choice == "9":
                 display_statistics(scheduler)
             else:
                 print("Invalid choice. Please try again.")
