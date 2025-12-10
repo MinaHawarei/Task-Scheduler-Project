@@ -6,6 +6,7 @@ It provides an interactive CLI menu to test all functionality.
 """
 
 from src.scheduler import Scheduler
+from src.state_manager import StateManager
 
 
 def print_menu():
@@ -217,17 +218,18 @@ def main():
     Returns:
         None
     """
-    scheduler = Scheduler()
+    state_manager = StateManager()
+    scheduler = Scheduler(state_manager=state_manager)
     
-    # Auto-load queue from file on startup
-    if scheduler.load_queue_from_file():
-        print(f"✓ Queue loaded from file. {scheduler.get_queue_size()} task(s) restored.")
+    # Auto-load full application state on startup
+    if scheduler.load_state():
+        print("App state loaded successfully.")
     else:
-        print("Starting with empty queue.")
+        print("Starting with a fresh state.")
     
     print("\nWelcome to Task Scheduler & Job History Manager!")
     print("This application demonstrates Queue, Linked List, and Hash Table data structures.")
-    print("Note: Queue is automatically saved after every change and loaded on startup.")
+    print("Note: Application state is automatically saved after any change and loaded on startup.")
     
     while True:
         print_menu()

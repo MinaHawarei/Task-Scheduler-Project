@@ -1,0 +1,42 @@
+{
+  "queue": {
+    "items": [
+      "13"
+    ]
+  },
+  "hash_table": {
+    "capacity": 16,
+    "entries": [
+      {
+        "key": "12",
+        "value": {
+          "job_id": "12",
+          "status": "completed",
+          "submitted_at": "2025-12-10 13:08:28",
+          "completed_at": "2025-12-10 13:08:45"
+        }
+      },
+      {
+        "key": "13",
+        "value": {
+          "job_id": "13",
+          "status": "pending",
+          "submitted_at": "2025-12-10 13:08:39"
+        }
+      }
+    ]
+  },
+  "history": {
+    "entries": [
+      {
+        "job_id": "12",
+        "timestamp": "2025-12-10 13:08:45"
+      }
+    ]
+  },
+  "config": {},
+  "metadata": {
+    "saved_at": "2025-12-10T13:08:45.260978",
+    "version": 1
+  }
+}

@@ -145,6 +145,42 @@ class HistoryLog:
         """
         return self.length
 
+    def to_dict(self):
+        """
+        Serialize history log to a dictionary.
+        
+        Returns:
+            dict: Serialized history data
+        """
+        entries = []
+        current = self.head
+        while current:
+            entries.append({"job_id": current.job_id, "timestamp": current.timestamp})
+            current = current.next
+        return {"entries": entries}
+
+    @classmethod
+    def from_dict(cls, data):
+        """
+        Create a HistoryLog instance from serialized data.
+        
+        Parameters:
+            data (dict): Serialized history data
+        
+        Returns:
+            HistoryLog: Restored history log
+        """
+        history = cls()
+        entries = data.get("entries", [])
+        if isinstance(entries, list):
+            # Add in reverse to preserve original ordering (most recent first)
+            for entry in reversed(entries):
+                job_id = entry.get("job_id")
+                timestamp = entry.get("timestamp")
+                if job_id is not None:
+                    history.add_to_history(job_id, timestamp)
+        return history
+
     def is_empty(self):
         """
         Check if the history log is empty.

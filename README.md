@@ -1,13 +1,12 @@
 # Task Scheduler & Job History Manager
 
-A comprehensive Python project demonstrating the implementation of fundamental data structures (Queue, Linked List, and Hash Table) from scratch, integrated into a task scheduling system with job history management.
+A Python project demonstrating core data structures (Queue, Linked List, Hash Table) integrated into a task scheduling system with **full application state persistence**.
 
 ## Project Overview
 
-This project implements a complete task scheduler that uses three core data structures:
-- **Queue**: Manages pending tasks in FIFO order with file persistence
-- **Linked List**: Maintains chronological history of executed jobs
-- **Hash Table**: Provides O(1) average-case lookup for job IDs using chaining for collision resolution
+- Task scheduling with FIFO queuing, O(1) lookups, and execution history.
+- **Full program state persistence**: the entire application state (queue, history, hash table/job metadata, config) is saved to a single JSON file and restored automatically on startup.
+- No manual save/load steps are required; all changes auto-save.
 
 ## Project Structure
 
@@ -15,67 +14,71 @@ This project implements a complete task scheduler that uses three core data stru
 Task-Scheduler-Project/
 ├── src/
 │   ├── __init__.py          # Package initialization
-│   ├── queue.py             # Queue implementation with persistence
+│   ├── queue.py             # Queue implementation
 │   ├── linked_list.py       # Linked list for history log
 │   ├── hash_table.py        # Hash table with chaining
-│   └── scheduler.py         # Main scheduler integrating all structures
+│   ├── state_manager.py     # Unified state persistence (app_state.json)
+│   └── scheduler.py         # Scheduler integrating all structures and state
 ├── tests/
 │   ├── __init__.py
-│   └── test_scheduler.py    # Test file (for future unit tests)
+│   └── test_scheduler.py    # Test file (placeholder)
 ├── main.py                  # CLI application entry point
 ├── requirements.txt         # Project dependencies
-└── README.md               # This file
+└── README.md                # This file
 ```
 
 ## Features
 
-### 1. Queue Data Structure (`src/queue.py`)
-- **Methods:**
-  - `enqueue(item)`: Add item to the rear of the queue
-  - `dequeue()`: Remove and return item from the front (FIFO)
-  - `is_empty()`: Check if queue is empty
-  - `peek()`: View front item without removing it
-  - `save_queue_to_file(filename)`: Persist queue state to JSON file
-  - `load_queue_from_file(filename)`: Restore queue state from file
+- **Automatic full-state load on startup**: The app restores from `app_state.json` if it exists and is valid.
+- **Automatic full-state save on any change**: Enqueue, dequeue/execute, removals, and future state changes trigger an auto-save.
+- **Centralized state management**: `src/state_manager.py` is the single source of truth for persistence.
+- **JSON-based storage**: State is serialized to human-readable JSON for portability and debugging.
+- **Graceful handling of missing/corrupted state files**: Missing or invalid files fall back to a fresh default state without crashing.
+- **Menu simplified**: Manual “Save/Load Queue” options removed; state is handled automatically.
 
-### 2. Linked List - History Log (`src/linked_list.py`)
-- **Methods:**
-  - `add_to_history(job_id, timestamp)`: Add executed job to history
-  - `display_history()`: Print all jobs in chronological order
-  - `get_last_n(n)`: Retrieve the last N executed jobs
-  - Stores jobs with timestamps for tracking execution time
+### Data Structures
 
-### 3. Hash Table (`src/hash_table.py`)
-- **Methods:**
-  - `hash(key)`: Compute hash value using polynomial rolling hash
-  - `insert(key, value)`: Insert/update key-value pair
-  - `search(key)`: O(1) average-case lookup
-  - `remove(key)`: Remove key-value pair
-- **Collision Handling:** Uses chaining (linked list) at each bucket
-- **Features:**
-  - Automatic resizing when load factor exceeds 0.75
-  - Polynomial hash function for good distribution
-  - Detailed comments explaining collision resolution
+1. **Queue (`src/queue.py`)**
+   - Methods: `enqueue`, `dequeue`, `is_empty`, `peek`, `size`
+   - Serializable via `to_dict` / `from_dict`
 
-### 4. Scheduler (`src/scheduler.py`)
-- **Methods:**
-  - `submit_task(job_id)`: Add new task to queue and hash table
-  - `run_next_task()`: Execute next task from queue
-  - `run_all()`: Execute all pending tasks
-  - `find_job(job_id)`: O(1) lookup using hash table
-  - `get_last_n_tasks(n)`: Get recent execution history
-  - `remove_job(job_id)`: Remove job from hash table
-  - `save_queue_to_file()` / `load_queue_from_file()`: Persistence
+2. **Linked List - History Log (`src/linked_list.py`)**
+   - Methods: `add_to_history`, `display_history`, `get_last_n`, `size`
+   - Stores job ID + timestamp; serializable via `to_dict` / `from_dict`
 
-## Installation
+3. **Hash Table (`src/hash_table.py`)**
+   - Methods: `hash`, `insert`, `search`, `remove`, `get_all_keys`
+   - Collision handling via chaining; serializable via `to_dict` / `from_dict`
 
-1. Clone or download this project
-2. Ensure Python 3.6+ is installed
-3. No external dependencies required (uses only Python standard library)
+4. **Scheduler (`src/scheduler.py`)**
+   - Methods: `submit_task`, `run_next_task`, `run_all`, `find_job`, `remove_job`, `display_queue`, `get_last_n_tasks`
+   - Integrates Queue, HashTable, HistoryLog, and `StateManager`
+   - Provides `to_dict` / `_from_dict` for full-state serialization
+
+5. **State Manager (`src/state_manager.py`)**
+   - Saves/loads full application state to `app_state.json`
+   - Handles missing/corrupted files gracefully
+   - Centralizes auto-save logic triggered by the scheduler
+
+## How State Persistence Works
+
+- **What is saved**: queue contents, history entries (with timestamps), hash table entries (job metadata), and config/runtime settings.
+- **When it saves**: automatically after any state-changing operation (enqueue, dequeue/execute, remove, future config updates).
+- **How it loads**: on program start, `main.py` calls the scheduler’s `load_state()`; if the file is valid, everything is restored, otherwise a fresh state is used.
+- **State file**: `app_state.json` (JSON). High-level structure:
+  ```json
+  {
+    "queue": { "items": [...] },
+    "history": { "entries": [ { "job_id": "...", "timestamp": "..." } ] },
+    "hash_table": { "capacity": 16, "entries": [ { "key": "...", "value": {...} } ] },
+    "config": {},
+    "metadata": { "saved_at": "2025-12-10T12:34:56.000Z", "version": 1 }
+  }
+  ```
 
 ## Usage
 
-### Running the Application
+### Run
 
 ```bash
 python main.py
@@ -83,87 +86,67 @@ python main.py
 
 ### Interactive Menu Options
 
-1. **Submit a new task** - Add a job to the queue
-2. **Run next task** - Execute the first task in queue
-3. **Run all pending tasks** - Execute all tasks in queue
-4. **View execution history** - Display all executed jobs
-5. **Search for a job by ID** - O(1) lookup using hash table
-6. **View last N tasks** - Get recent execution history
-7. **Remove job from hash table** - Clean up completed jobs
-8. **Save queue to file** - Persist queue state
-9. **Load queue from file** - Restore queue state
-10. **Display queue status** - Show pending tasks
-11. **Display statistics** - View scheduler metrics
+1. Submit a new task  
+2. Run next task  
+3. Run all pending tasks  
+4. View execution history  
+5. Search for a job by ID  
+6. View last N tasks  
+7. Remove job from hash table  
+8. Display queue status  
+9. Display statistics  
 
-## Example Workflow
+> Manual save/load is not needed. Close and reopen the program; it resumes from the last saved state automatically.
 
-```
-1. Submit tasks: job1, job2, job3
-2. Run next task → job1 executes and moves to history
-3. Run all → job2 and job3 execute
-4. View history → See all executed jobs with timestamps
-5. Search job1 → Get job details from hash table
-6. Save queue → Persist state to queue_state.txt
-7. Load queue → Restore state from file
-```
+### Example Startup Message
 
-## Data Structure Details
+- `App state loaded successfully.` (when `app_state.json` is valid)  
+- `Starting with a fresh state.` (when the file is missing/corrupted)
 
-### Queue Implementation
-- Uses Python list with `append()` and `pop(0)` operations
-- File persistence using JSON format
-- FIFO (First In First Out) ordering
+## Architecture / Code Structure
 
-### Linked List Implementation
-- Singly linked list with head pointer
-- Most recent jobs stored at the head (O(1) insertion)
-- Each node contains job_id and timestamp
+- `main.py`: CLI entry; bootstraps `Scheduler` with `StateManager`, auto-loads state, runs menu.
+- `scheduler.py`: Orchestrates Queue, HashTable, HistoryLog; triggers auto-save through `StateManager`; provides serialization.
+- `queue.py`: FIFO queue logic; serializable to/from dict.
+- `linked_list.py`: Execution history via singly linked list; serializable.
+- `hash_table.py`: O(1) average lookup with chaining; serializable.
+- `state_manager.py`: Centralized full-state persistence to JSON; handles load/save and error resilience.
 
-### Hash Table Implementation
-- **Hash Function:** Polynomial rolling hash (base 31)
-  - Formula: `hash = (hash * 31 + char_code) % capacity`
-  - Provides good distribution for string keys
-- **Collision Resolution:** Chaining
-  - Each bucket contains a linked list of key-value pairs
-  - When collision occurs, new node is added to the chain
-  - Average case: O(1), Worst case: O(n) if all keys hash to same bucket
-- **Load Factor:** Automatically resizes when > 0.75
+## Error Handling
 
-## Code Quality
+- Missing `app_state.json`: starts with a fresh state, no crash.
+- Corrupted/invalid JSON: logs a message and falls back to a clean state.
+- All auto-saves use JSON; failures are logged to the console.
 
-- ✅ Clean OOP structure with separate classes
-- ✅ Comprehensive docstrings for all methods
-- ✅ Type hints and clear parameter descriptions
-- ✅ Error handling and validation
-- ✅ Readable, maintainable code
-- ✅ No external dependencies (pure Python)
+## Examples
 
-## File Persistence Format
+- **Auto-load message**: `App state loaded successfully.`  
+- **Fresh start message**: `Starting with a fresh state.`  
+- **State file snippet**:
+  ```json
+  {
+    "queue": { "items": ["job1", "job2"] },
+    "history": { "entries": [] },
+    "hash_table": { "capacity": 16, "entries": [] },
+    "config": {},
+    "metadata": { "saved_at": "2025-12-10T12:34:56.000Z", "version": 1 }
+  }
+  ```
 
-Queue state is saved as JSON:
-```json
-["job1", "job2", "job3"]
-```
+## Changelog
+
+- **Full-state persistence**: Introduced unified state management via `state_manager.py`; automatic load on startup and auto-save on every state change; removed manual queue save/load options.
+
+## Installation
+
+1. Ensure Python 3.6+ is installed.
+2. Clone or download the project.
+3. No external dependencies are required (uses only the Python standard library).
 
 ## Testing
 
-The application includes an interactive CLI menu for manual testing. To test all features:
-
-1. Run `python main.py`
-2. Use the menu to test each functionality
-3. Try edge cases (empty queue, non-existent jobs, etc.)
-
-## Future Enhancements
-
-- Unit tests in `tests/test_scheduler.py`
-- Priority queue support
-- Job scheduling with delays
-- Database persistence
-- Web interface
-
-## Author
-
-Data Structures Project - Task Scheduler Implementation
+- Run `python main.py` and exercise menu options.
+- Validate persistence by closing and reopening the app; prior tasks/history/config should be restored.
 
 ## License
 

@@ -8,6 +8,7 @@ and Hash Table data structures to manage task execution and history.
 from .queue import Queue
 from .linked_list import HistoryLog
 from .hash_table import HashTable
+from .state_manager import StateManager
 
 
 class Scheduler:
@@ -20,7 +21,7 @@ class Scheduler:
     - HistoryLog: To maintain execution history
     """
 
-    def __init__(self):
+    def __init__(self, state_manager=None):
         """
         Initialize the scheduler with empty data structures.
         
@@ -29,6 +30,8 @@ class Scheduler:
         self.queue = Queue()
         self.hash_table = HashTable()
         self.history = HistoryLog()
+        self.config = {}  # Placeholder for future runtime settings/configuration
+        self.state_manager = state_manager or StateManager()
 
     def submit_task(self, job_id):
         """
@@ -55,6 +58,7 @@ class Scheduler:
         }
         self.hash_table.insert(job_id, job_data)
         
+        self._auto_save()
         return True
 
     def run_next_task(self):
@@ -87,6 +91,7 @@ class Scheduler:
         # Add to history log
         self.history.add_to_history(job_id)
         
+        self._auto_save()
         return job_id
 
     def run_all(self):
@@ -172,31 +177,10 @@ class Scheduler:
         Returns:
             bool: True if job was found and removed, False otherwise
         """
-        return self.hash_table.remove(job_id)
-
-    def save_queue_to_file(self, filename="queue_state.txt"):
-        """
-        Save the current queue state to a file.
-        
-        Parameters:
-            filename (str): The name of the file to save to
-        
-        Returns:
-            bool: True if save was successful, False otherwise
-        """
-        return self.queue.save_queue_to_file(filename)
-
-    def load_queue_from_file(self, filename="queue_state.txt"):
-        """
-        Load queue state from a file.
-        
-        Parameters:
-            filename (str): The name of the file to load from
-        
-        Returns:
-            bool: True if load was successful, False otherwise
-        """
-        return self.queue.load_queue_from_file(filename)
+        removed = self.hash_table.remove(job_id)
+        if removed:
+            self._auto_save()
+        return removed
 
     def display_queue(self):
         """
@@ -212,4 +196,49 @@ class Scheduler:
             print(f"Queue size: {self.queue.size()}")
             print(f"Next task: {self.queue.peek()}")
             print("=" * 50)
+
+    def _auto_save(self):
+        """
+        Trigger an automatic save of the full application state.
+        """
+        self.state_manager.save_state(self)
+
+    def to_dict(self):
+        """
+        Serialize scheduler state to a dictionary suitable for JSON.
+        
+        Returns:
+            dict: Serialized scheduler state
+        """
+        return {
+            "queue": self.queue.to_dict(),
+            "hash_table": self.hash_table.to_dict(),
+            "history": self.history.to_dict(),
+            "config": self.config,
+        }
+
+    def load_state(self):
+        """
+        Load scheduler state from persistent storage.
+        
+        Returns:
+            bool: True if state was loaded, False otherwise.
+        """
+        loaded_state = self.state_manager.load_state()
+        if not loaded_state:
+            return False
+        self._from_dict(loaded_state)
+        return True
+
+    def _from_dict(self, data):
+        """
+        Restore scheduler state from a dictionary.
+        
+        Parameters:
+            data (dict): Serialized scheduler state
+        """
+        self.queue = Queue.from_dict(data.get("queue", {}))
+        self.hash_table = HashTable.from_dict(data.get("hash_table", {}))
+        self.history = HistoryLog.from_dict(data.get("history", {}))
+        self.config = data.get("config", {})
 

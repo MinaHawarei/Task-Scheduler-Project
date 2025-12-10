@@ -12,6 +12,7 @@ from .queue import Queue
 from .linked_list import HistoryLog
 from .hash_table import HashTable
 from .scheduler import Scheduler
+from .state_manager import StateManager
 
-__all__ = ['Queue', 'HistoryLog', 'HashTable', 'Scheduler']
+__all__ = ['Queue', 'HistoryLog', 'HashTable', 'Scheduler', 'StateManager']
 

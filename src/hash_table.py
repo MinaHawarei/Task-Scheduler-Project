@@ -216,6 +216,44 @@ class HashTable:
                 current = current.next
         return keys
 
+    def to_dict(self):
+        """
+        Serialize hash table to a dictionary.
+        
+        Returns:
+            dict: Serialized hash table data
+        """
+        entries = []
+        for bucket in self.buckets:
+            current = bucket
+            while current:
+                entries.append({"key": current.key, "value": current.value})
+                current = current.next
+        return {
+            "capacity": self.capacity,
+            "entries": entries,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """
+        Create a HashTable instance from serialized data.
+        
+        Parameters:
+            data (dict): Serialized hash table data
+        
+        Returns:
+            HashTable: Restored hash table
+        """
+        capacity = data.get("capacity", 16)
+        table = cls(capacity=capacity)
+        entries = data.get("entries", [])
+        if isinstance(entries, list):
+            for entry in entries:
+                if "key" in entry and "value" in entry:
+                    table.insert(entry["key"], entry["value"])
+        return table
+
     def is_empty(self):
         """
         Check if the hash table is empty.
